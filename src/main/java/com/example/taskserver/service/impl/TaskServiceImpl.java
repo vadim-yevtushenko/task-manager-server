@@ -8,6 +8,8 @@ import com.example.taskserver.entity.Tag;
 import com.example.taskserver.repository.TaskRepository;
 import com.example.taskserver.service.TaskService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,7 @@ public class TaskServiceImpl implements TaskService {
     private final TaskMapper taskMapper;
 
     @Override
+    @Cacheable(value = "tasks", key = "#userId + #pageable.pageNumber")
     public Page<TaskSummaryDto> getTasks(String userId, Tag tag, Pageable pageable) {
         if (tag != null){
             return repository.findByTagAndUserId(tag, userId, pageable).map(taskMapper::toSummaryDto);
@@ -38,6 +41,7 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    @CacheEvict(value = "tasks", allEntries = true)
     public TaskDto save(TaskDto taskDto) {
         if (taskDto.getId() != null) {
             return repository.findById(taskDto.getId())
@@ -53,6 +57,7 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    @CacheEvict(value = "tasks", allEntries = true)
     public void delete(String id) {
         repository.deleteById(id);
     }
